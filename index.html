@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美咲ねむねむ 💤 学校・生活ログ</title>
+    <style>
+        :root { 
+            --primary: #ff9f43; 
+            --bg: #fffaf0; 
+            --card: #ffffff; 
+        }
+        body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; transition: background 0.5s ease; }
+        .app { width: 100%; max-width: 900px; margin: 0 auto; }
+        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        h1 { font-size: 1.6rem; color: var(--primary); text-align: center; margin-bottom: 20px; transition: color 0.5s ease; }
+        .date-selector { text-align: center; margin-bottom: 20px; }
+        .date-selector input { padding: 10px; border-radius: 10px; border: 2px solid var(--primary); font-size: 1.1rem; width: 80%; outline: none; transition: border-color 0.5s ease; }
+        
+        h2 { font-size: 1rem; margin-bottom: 12px; border-left: 5px solid var(--primary); padding-left: 10px; color: #444; transition: border-color 0.5s ease; }
+
+        .grid-select { display: grid; gap: 10px; margin-bottom: 20px; }
+        .mood-grid, .weather-grid, .meal-grid, .exercise-grid, .condition-grid { grid-template-columns: repeat(4, 1fr); }
+        .single-grid { grid-template-columns: 1fr; }
+
+        .unit { display: flex; flex-direction: column; align-items: center; }
+        .label-sm { font-size: 0.65rem; color: #888; margin-bottom: 4px; font-weight: bold; text-align: center; height: 1.2rem; display: flex; align-items: center; }
+        
+        .btn-check { width: 100%; border: 2px solid #eee; background: white; border-radius: 12px; padding: 10px 0; cursor: pointer; font-size: 1.4rem; transition: 0.2s; }
+        .btn-check.active { border-color: var(--primary); background: rgba(var(--primary-rgb), 0.1); transform: scale(0.95); }
+        
+        .other-input { width: 100%; margin-top: 5px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.9rem; display: none; box-sizing: border-box; }
+        .other-input.show { display: block; }
+
+        .row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .col { flex: 1; display: flex; flex-direction: column; }
+        input[type="time"], textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1.1rem; box-sizing: border-box; }
+        textarea { height: 100px; resize: none; }
+        
+        .save-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 35px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: background 0.5s ease; }
+
+        .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        #month-filter { padding: 8px; border-radius: 8px; border: 2px solid var(--primary); background: white; font-weight: bold; color: #444; outline: none; }
+
+        .history-card { padding: 10px !important; }
+        .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #eee; }
+        table { border-collapse: collapse; min-width: 100%; line-height: 1.4; }
+        th.label-col { position: sticky; left: 0; background: #fafafa; color: var(--primary); z-index: 10; min-width: 60px; font-size: 0.75rem; border-right: 2px solid var(--primary); padding: 8px 4px; transition: color 0.5s ease, border-color 0.5s ease; }
+        td, th { border: 1px solid #eee; padding: 8px 6px; text-align: center; min-width: 80px; font-size: 0.75rem; }
+        .date-header { font-weight: bold; background: #fafafa; }
+        .memo-row td { text-align: left; min-width: 180px; color: #555; white-space: normal; }
+        .cond-cell, .meal-cell, .exercise-cell { font-weight: bold; white-space: normal; line-height: 1.2; font-size: 1.1rem; }
+        .cond-cell { color: #e74c3c; } 
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div class="card">
+        <h1>🌙 美咲ねむねむ</h1>
+        <div class="date-selector"><input type="date" id="target-date"></div>
+
+        <h2>天気はどう？ ☀️☁️☔️☃️</h2>
+        <div class="grid-select weather-grid" id="weather-group">
+            <div class="unit"><span class="label-sm">晴れ</span><button class="btn-check" onclick="selectSingle(this, 'weather-group')">☀️</button></div>
+            <div class="unit"><span class="label-sm">くもり</span><button class="btn-check" onclick="selectSingle(this, 'weather-group')">☁️</button></div>
+            <div class="unit"><span class="label-sm">雨</span><button class="btn-check" onclick="selectSingle(this, 'weather-group')">☔️</button></div>
+            <div class="unit"><span class="label-sm">雪</span><button class="btn-check" onclick="selectSingle(this, 'weather-group')">☃️</button></div>
+        </div>
+
+        <h2>今の気分は？ 😊😆🥰🌈💤🥺😵‍💫💢</h2>
+        <div class="grid-select mood-grid" id="mood-group">
+            <div class="unit"><span class="label-sm">いい感</span><button class="btn-check" onclick="selectSingle(this, 'mood-group')">😊</button></div>
+            <div class="unit"><span class="label-sm">最高！</span><button class="btn-check" onclick="selectSingle(this, 'mood-group')">😆</button></div>
+            <div class="unit"><span class="label-sm">るんるん</span><button class="btn-check" onclick="selectSingle(this, 'mood-group')">🥰</button></div>
+            <div class="unit"><span class="label-sm">絶好調</span><button class="btn-check" onclick="selectSingle(this, 'mood-group')">🌈</button></div>
+            <div class="unit"><span class="label-sm">ねむい</span><button class="btn-check" onclick="selectSingle(this, 'mood-group')">💤</button></div>
+            <div class="unit"><span class="label-sm">ぴえん</span><button class="btn-check" onclick="selectSingle(this, 'mood-group')">🥺</button></div>
+            <div class="unit"><span class="label-sm">お疲れ</span><button class="btn-check" onclick="selectSingle(this, 'mood-group')">😵‍💫</button></div>
+            <div class="unit"><span class="label-sm">ぷんぷん</span><button class="btn-check" onclick="selectSingle(this, 'mood-group')">💢</button></div>
+        </div>
+
+        <h2>体調はどう？ 🤕🤢💥📝</h2>
+        <div class="grid-select condition-grid" id="condition-group">
+            <div class="unit"><span class="label-sm">頭痛</span><button class="btn-check cond-btn" data-emoji="🤕">🤕</button></div>
+            <div class="unit"><span class="label-sm">腹痛</span><button class="btn-check cond-btn" data-emoji="🤢">🤢</button></div>
+            <div class="unit"><span class="label-sm">筋肉痛</span><button class="btn-check cond-btn" data-emoji="💥">💥</button></div>
+            <div class="unit"><span class="label-sm">その他</span><button class="btn-check cond-btn" id="other-cond-btn" data-emoji="📝">📝</button></div>
+        </div>
+        <input type="text" id="other-cond-text" class="other-input" placeholder="具体的な症状を入力 (例: のどが痛い)">
+
+        <h2>ごはん・おやつ 🍳🍞🥣🍩</h2>
+        <div class="grid-select meal-grid" id="meal-group">
+            <div class="unit"><span class="label-sm">昨晩</span><button class="btn-check meal-btn" data-emoji="🍳">🍳</button></div>
+            <div class="unit"><span class="label-sm">朝食</span><button class="btn-check meal-btn" data-emoji="🍞">🍞</button></div>
+            <div class="unit"><span class="label-sm">昼食</span><button class="btn-check meal-btn" data-emoji="🥣">🥣</button></div>
+            <div class="unit"><span class="label-sm">おやつ</span><button class="btn-check meal-btn" data-emoji="🍩">🍩</button></div>
+        </div>
+
+        <h2>体うごかした？ 🚶💪🏃‍♀️🎾</h2>
+        <div class="grid-select exercise-grid" id="exercise-group">
+            <div class="unit"><span class="label-sm">さんぽ</span><button class="btn-check exercise-btn" data-emoji="🚶">🚶</button></div>
+            <div class="unit"><span class="label-sm">トレ</span><button class="btn-check exercise-btn" data-emoji="💪">💪</button></div>
+            <div class="unit"><span class="label-sm">走り</span><button class="btn-check exercise-btn" data-emoji="🏃‍♀️">🏃‍♀️</button></div>
+            <div class="unit"><span class="label-sm">スポ</span><button class="btn-check exercise-btn" data-emoji="🎾">🎾</button></div>
+        </div>
+
+        <h2>学校にいった？ 🏫</h2>
+        <div class="grid-select single-grid">
+            <div class="unit"><button class="btn-check subject-btn" id="school-btn">🏫 登校した！</button></div>
+        </div>
+
+        <h2>睡眠・日記 💤📓</h2>
+        <div class="row">
+            <div class="col"><span class="label-sm">就寝</span><input type="time" id="sleepT" value="22:00"></div>
+            <div class="col"><span class="label-sm">起床</span><input type="time" id="wakeT" value="06:30"></div>
+        </div>
+        <textarea id="memo" placeholder="今日の出来事やメモ..."></textarea>
+        <button class="save-btn" id="save-button">今日の記録を保存する 💾</button>
+    </div>
+
+    <div class="card history-card">
+        <div class="history-header">
+            <h2>みんなの歩み 📈</h2>
+            <select id="month-filter"></select>
+        </div>
+        <div class="table-container">
+            <table id="matrix-table">
+                <tr id="row-date"><th class="label-col">日付</th></tr>
+                <tr id="row-weather"><th class="label-col">天気</th></tr>
+                <tr id="row-mood"><th class="label-col">気分</th></tr>
+                <tr id="row-cond"><th class="label-col">体調</th></tr>
+                <tr id="row-meals"><th class="label-col">食事</th></tr>
+                <tr id="row-exercise"><th class="label-col">運動</th></tr>
+                <tr id="row-subject"><th class="label-col">学校</th></tr>
+                <tr id="row-sleep"><th class="label-col">睡眠</th></tr>
+                <tr id="row-memo" class="memo-row"><th class="label-col">日記</th></tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  // --- 🔴 ここをあなたのFirebaseコンソールの設定に書き換えてください！ ---
+ const firebaseConfig = {
+    apiKey: "AIzaSyCEqRH48ybcbAMNhvPDtah_IbMPdqxD3go",
+    authDomain: "misaki-nemunemu.firebaseapp.com",
+    projectId: "misaki-nemunemu",
+    storageBucket: "misaki-nemunemu.firebasestorage.app",
+    messagingSenderId: "961610055742",
+    appId: "1:961610055742:web:73a547e2e2a9dbda92d16f",
+    measurementId: "G-M8S456FPJH"
+  };
+  // ----------------------------------------------------------------------
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // グローバルに関数を公開（HTMLのonclickから呼べるようにする）
+  window.selectSingle = (btn, groupId) => {
+      document.querySelectorAll(`#${groupId} .btn-check`).forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+  };
+
+  const colors = [
+      { primary: '#ff9f43', bg: '#fffaf0' }, { primary: '#ff6b6b', bg: '#fff5f5' },
+      { primary: '#48dbfb', bg: '#f0faff' }, { primary: '#1dd1a1', bg: '#f0fffb' },
+      { primary: '#a29bfe', bg: '#f7f6ff' }, { primary: '#feca57', bg: '#fffbef' },
+      { primary: '#ff9ff3', bg: '#fff5fd' }
+  ];
+
+  function applyRandomTheme() {
+      const theme = colors[Math.floor(Math.random() * colors.length)];
+      document.documentElement.style.setProperty('--primary', theme.primary);
+      document.documentElement.style.setProperty('--bg', theme.bg);
+      const r = parseInt(theme.primary.slice(1, 3), 16), g = parseInt(theme.primary.slice(3, 5), 16), b = parseInt(theme.primary.slice(5, 7), 16);
+      document.documentElement.style.setProperty('--primary-rgb', `${r}, ${g}, ${b}`);
+  }
+
+  // ボタンのクリックイベント設定
+  document.querySelectorAll('.btn-check').forEach(btn => {
+      if(!btn.onclick) {
+          btn.addEventListener('click', () => {
+              btn.classList.toggle('active');
+              if(btn.id === 'other-cond-btn') document.getElementById('other-cond-text').classList.toggle('show', btn.classList.contains('active'));
+          });
+      }
+  });
+
+  // 初期化処理
+  window.onload = () => {
+      applyRandomTheme();
+      const d = document.getElementById('target-date');
+      d.value = new Date().toISOString().split('T')[0];
+      
+      // データ変更を監視（リアルタイム同期）
+      const dbRef = ref(db, 'logs');
+      onValue(dbRef, (snapshot) => {
+          const data = snapshot.val();
+          const history = data ? Object.values(data) : [];
+          showHistory(history);
+          loadFormData(history);
+      });
+
+      d.addEventListener('change', () => {
+        const dbRef = ref(db, 'logs');
+        onValue(dbRef, (snapshot) => {
+            loadFormData(snapshot.val() ? Object.values(snapshot.val()) : []);
+        }, { onlyOnce: true });
+      });
+  };
+
+  // 保存ボタン
+  document.getElementById('save-button').onclick = () => {
+      const date = document.getElementById('target-date').value;
+      const entry = {
+          date: date,
+          weather: document.querySelector('.weather-grid .active')?.innerText || "-",
+          mood: document.querySelector('.mood-grid .active')?.innerText || "-",
+          condEmojis: Array.from(document.querySelectorAll('.cond-btn.active')).map(b => b.dataset.emoji),
+          otherCond: document.getElementById('other-cond-btn').classList.contains('active') ? document.getElementById('other-cond-text').value : "",
+          mealEmojis: Array.from(document.querySelectorAll('.meal-btn.active')).map(b => b.dataset.emoji),
+          exEmojis: Array.from(document.querySelectorAll('.exercise-btn.active')).map(b => b.dataset.emoji),
+          atSchool: document.getElementById('school-btn').classList.contains('active'),
+          sTime: document.getElementById('sleepT').value,
+          wTime: document.getElementById('wakeT').value,
+          memo: document.getElementById('memo').value
+      };
+
+      // 日付をキーにして保存（上書き可能にする）
+      set(ref(db, 'logs/' + date.replace(/-/g, '')), entry)
+      .then(() => alert("クラウドに保存しました！ ☁️"))
+      .catch((error) => alert("エラーが発生しました: " + error));
+  };
+
+  // フォームにデータを読み込む
+  function loadFormData(history) {
+      const target = document.getElementById('target-date').value;
+      const data = history.find(item => item.date === target);
+
+      // リセット
+      document.querySelectorAll('.btn-check').forEach(b => b.classList.remove('active'));
+      document.getElementById('other-cond-text').classList.remove('show');
+      document.getElementById('other-cond-text').value = "";
+      document.getElementById('memo').value = "";
+      document.getElementById('sleepT').value = "22:00";
+      document.getElementById('wakeT').value = "06:30";
+
+      if (data) {
+          document.querySelectorAll('.weather-grid .btn-check').forEach(b => { if(b.innerText === data.weather) b.classList.add('active'); });
+          document.querySelectorAll('.mood-grid .btn-check').forEach(b => { if(b.innerText === data.mood) b.classList.add('active'); });
+          if(data.condEmojis) data.condEmojis.forEach(emoji => {
+              const btn = Array.from(document.querySelectorAll('.cond-btn')).find(b => b.dataset.emoji === emoji);
+              if(btn) btn.classList.add('active');
+          });
+          if(data.otherCond) {
+              document.getElementById('other-cond-btn').classList.add('active');
+              document.getElementById('other-cond-text').classList.add('show');
+              document.getElementById('other-cond-text').value = data.otherCond;
+          }
+          if(data.mealEmojis) data.mealEmojis.forEach(emoji => Array.from(document.querySelectorAll('.meal-btn')).find(b => b.dataset.emoji === emoji)?.classList.add('active'));
+          if(data.exEmojis) data.exEmojis.forEach(emoji => Array.from(document.querySelectorAll('.exercise-btn')).find(b => b.dataset.emoji === emoji)?.classList.add('active'));
+          if(data.atSchool) document.getElementById('school-btn').classList.add('active');
+          document.getElementById('sleepT').value = data.sTime || "22:00";
+          document.getElementById('wakeT').value = data.wTime || "06:30";
+          document.getElementById('memo').value = data.memo || "";
+      }
+  }
+
+  // 履歴テーブルの表示
+  function showHistory(history) {
+      const monthFilter = document.getElementById('month-filter');
+      
+      // 年月リスト
+      const months = [...new Set(history.map(item => item.date.substring(0, 7)))].sort().reverse();
+      if (months.length === 0) months.push(new Date().toISOString().substring(0, 7));
+      
+      const currentFilter = monthFilter.value || months[0];
+      monthFilter.innerHTML = months.map(m => `<option value="${m}" ${m === currentFilter ? 'selected' : ''}>${m.replace('-', '年')}月</option>`).join('');
+      
+      monthFilter.onchange = () => showHistory(history);
+
+      // クリア
+      document.querySelectorAll('#matrix-table tr').forEach(tr => {
+          const label = tr.querySelector('.label-col');
+          tr.innerHTML = '';
+          tr.appendChild(label);
+      });
+
+      // 日付順に並び替え
+      history.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+      // フィルタリング表示
+      history.filter(item => item.date.startsWith(monthFilter.value)).forEach(item => {
+          const d = item.date.split('-');
+          document.getElementById('row-date').innerHTML += `<td class="date-header">${d[1]}/${d[2]}</td>`;
+          document.getElementById('row-weather').innerHTML += `<td>${item.weather || "-"}</td>`;
+          document.getElementById('row-mood').innerHTML += `<td style="font-size:0.95rem">${item.mood || "-"}</td>`;
+          let condDisplay = (item.condEmojis || []).filter(e => e !== '📝').join('');
+          if(item.otherCond) condDisplay += `📝(${item.otherCond})`;
+          document.getElementById('row-cond').innerHTML += `<td class="cond-cell">${condDisplay || "-"}</td>`;
+          document.getElementById('row-meals').innerHTML += `<td class="meal-cell">${(item.mealEmojis || []).join('') || "-"}</td>`;
+          document.getElementById('row-exercise').innerHTML += `<td class="exercise-cell">${(item.exEmojis || []).join('') || "-"}</td>`;
+          document.getElementById('row-subject').innerHTML += `<td>${item.atSchool ? "🏫" : "×"}</td>`;
+          document.getElementById('row-sleep').innerHTML += `<td>${item.sTime}<br>↓<br>${item.wTime}</td>`;
+          document.getElementById('row-memo').innerHTML += `<td>${item.memo || "-"}</td>`;
+      });
+  }
+</script>
+
+</body>
+</html>
