@@ -11,38 +11,50 @@
             --card: #ffffff; 
         }
         body { font-family: sans-serif; background: var(--bg); margin: 0; padding: 10px; transition: background 0.5s ease; }
-        .app { width: 100%; max-width: 900px; margin: 0 auto; }
-        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
+        /* --- 認証画面のスタイル --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 10000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .login-card {
+            background: white; padding: 30px; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
+            width: 90%; max-width: 320px; border-top: 8px solid var(--primary);
+        }
+        .pass-input {
+            width: 100%; padding: 12px; margin: 20px 0;
+            border: 2px solid var(--primary); border-radius: 10px;
+            font-size: 1.2rem; text-align: center; box-sizing: border-box; outline: none;
+        }
+        #error-msg { color: #e74c3c; font-size: 0.8rem; margin-bottom: 10px; display: none; }
+        
+        /* アプリ本体：最初は非表示 */
+        .app { width: 100%; max-width: 900px; margin: 0 auto; display: none; }
+        
+        /* --- 元のスタイルを維持 --- */
+        .card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         h1 { font-size: 1.6rem; color: var(--primary); text-align: center; margin-bottom: 20px; transition: color 0.5s ease; }
         .date-selector { text-align: center; margin-bottom: 20px; }
         .date-selector input { padding: 10px; border-radius: 10px; border: 2px solid var(--primary); font-size: 1.1rem; width: 80%; outline: none; transition: border-color 0.5s ease; }
-        
         h2 { font-size: 1rem; margin-bottom: 12px; border-left: 5px solid var(--primary); padding-left: 10px; color: #444; transition: border-color 0.5s ease; }
-
         .grid-select { display: grid; gap: 10px; margin-bottom: 20px; }
         .mood-grid, .weather-grid, .meal-grid, .exercise-grid, .condition-grid { grid-template-columns: repeat(4, 1fr); }
         .single-grid { grid-template-columns: 1fr; }
-
         .unit { display: flex; flex-direction: column; align-items: center; }
         .label-sm { font-size: 0.65rem; color: #888; margin-bottom: 4px; font-weight: bold; text-align: center; height: 1.2rem; display: flex; align-items: center; }
-        
         .btn-check { width: 100%; border: 2px solid #eee; background: white; border-radius: 12px; padding: 10px 0; cursor: pointer; font-size: 1.4rem; transition: 0.2s; }
         .btn-check.active { border-color: var(--primary); background: rgba(var(--primary-rgb), 0.1); transform: scale(0.95); }
-        
         .other-input { width: 100%; margin-top: 5px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.9rem; display: none; box-sizing: border-box; }
         .other-input.show { display: block; }
-
         .row { display: flex; gap: 15px; margin-bottom: 20px; }
         .col { flex: 1; display: flex; flex-direction: column; }
         input[type="time"], textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 1.1rem; box-sizing: border-box; }
         textarea { height: 100px; resize: none; }
-        
         .save-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 35px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: background 0.5s ease; }
-
         .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         #month-filter { padding: 8px; border-radius: 8px; border: 2px solid var(--primary); background: white; font-weight: bold; color: #444; outline: none; }
-
         .history-card { padding: 10px !important; }
         .table-container { width: 100%; overflow-x: auto; background: white; border-radius: 10px; border: 1px solid #eee; }
         table { border-collapse: collapse; min-width: 100%; line-height: 1.4; }
@@ -56,7 +68,18 @@
 </head>
 <body>
 
-<div class="app">
+<!-- 合言葉認証画面 -->
+<div id="login-screen">
+    <div class="login-card">
+        <h2 style="border:none; text-align:center; padding:0;">🌙 合言葉を入力</h2>
+        <input type="password" id="pass-input" class="pass-input" placeholder="合言葉をいれてね" onkeydown="if(event.key==='Enter') checkAuth()">
+        <div id="error-msg">合言葉がちがうよ！(๑•́ ₃ •̀๑)</div>
+        <button class="save-btn" onclick="checkAuth()">ひらく</button>
+    </div>
+</div>
+
+<!-- アプリ本体 -->
+<div class="app" id="main-app">
     <div class="card">
         <h1>🌙 美咲ねむねむ</h1>
         <div class="date-selector"><input type="date" id="target-date"></div>
@@ -145,8 +168,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
   import { getDatabase, ref, set, onValue, push } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  // --- 🔴 ここをあなたのFirebaseコンソールの設定に書き換えてください！ ---
- const firebaseConfig = {
+  const firebaseConfig = {
     apiKey: "AIzaSyCEqRH48ybcbAMNhvPDtah_IbMPdqxD3go",
     authDomain: "misaki-nemunemu.firebaseapp.com",
     databaseURL: "https://misaki-nemunemu-default-rtdb.asia-southeast1.firebasedatabase.app/",
@@ -156,12 +178,25 @@
     appId: "1:961610055742:web:73a547e2e2a9dbda92d16f16f",
     measurementId: "G-M8S456FPJH"
   };
-  // ----------------------------------------------------------------------
 
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // グローバルに関数を公開（HTMLのonclickから呼べるようにする）
+  // --- 認証機能 ---
+  const CORRECT_PASS = "snssns";
+  window.checkAuth = () => {
+    const input = document.getElementById('pass-input').value;
+    if(input === CORRECT_PASS) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      initApp(); // 認証後にアプリを初期化
+    } else {
+      document.getElementById('error-msg').style.display = 'block';
+      document.getElementById('pass-input').value = "";
+    }
+  };
+
+  // --- 元のロジック ---
   window.selectSingle = (btn, groupId) => {
       document.querySelectorAll(`#${groupId} .btn-check`).forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
@@ -182,7 +217,6 @@
       document.documentElement.style.setProperty('--primary-rgb', `${r}, ${g}, ${b}`);
   }
 
-  // ボタンのクリックイベント設定
   document.querySelectorAll('.btn-check').forEach(btn => {
       if(!btn.onclick) {
           btn.addEventListener('click', () => {
@@ -192,13 +226,11 @@
       }
   });
 
-  // 初期化処理
-  window.onload = () => {
+  function initApp() {
       applyRandomTheme();
       const d = document.getElementById('target-date');
       d.value = new Date().toISOString().split('T')[0];
       
-      // データ変更を監視（リアルタイム同期）
       const dbRef = ref(db, 'logs');
       onValue(dbRef, (snapshot) => {
           const data = snapshot.val();
@@ -213,9 +245,8 @@
             loadFormData(snapshot.val() ? Object.values(snapshot.val()) : []);
         }, { onlyOnce: true });
       });
-  };
+  }
 
-  // 保存ボタン
   document.getElementById('save-button').onclick = () => {
       const date = document.getElementById('target-date').value;
       const entry = {
@@ -232,18 +263,15 @@
           memo: document.getElementById('memo').value
       };
 
-      // 日付をキーにして保存（上書き可能にする）
       set(ref(db, 'logs/' + date.replace(/-/g, '')), entry)
       .then(() => alert("クラウドに保存しました！ ☁️"))
       .catch((error) => alert("エラーが発生しました: " + error));
   };
 
-  // フォームにデータを読み込む
   function loadFormData(history) {
       const target = document.getElementById('target-date').value;
       const data = history.find(item => item.date === target);
 
-      // リセット
       document.querySelectorAll('.btn-check').forEach(b => b.classList.remove('active'));
       document.getElementById('other-cond-text').classList.remove('show');
       document.getElementById('other-cond-text').value = "";
@@ -272,30 +300,19 @@
       }
   }
 
-  // 履歴テーブルの表示
   function showHistory(history) {
       const monthFilter = document.getElementById('month-filter');
-      
-      // 年月リスト
       const months = [...new Set(history.map(item => item.date.substring(0, 7)))].sort().reverse();
       if (months.length === 0) months.push(new Date().toISOString().substring(0, 7));
-      
       const currentFilter = monthFilter.value || months[0];
       monthFilter.innerHTML = months.map(m => `<option value="${m}" ${m === currentFilter ? 'selected' : ''}>${m.replace('-', '年')}月</option>`).join('');
-      
       monthFilter.onchange = () => showHistory(history);
-
-      // クリア
       document.querySelectorAll('#matrix-table tr').forEach(tr => {
           const label = tr.querySelector('.label-col');
           tr.innerHTML = '';
           tr.appendChild(label);
       });
-
-      // 日付順に並び替え
       history.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-      // フィルタリング表示
       history.filter(item => item.date.startsWith(monthFilter.value)).forEach(item => {
           const d = item.date.split('-');
           document.getElementById('row-date').innerHTML += `<td class="date-header">${d[1]}/${d[2]}</td>`;
